@@ -1,15 +1,17 @@
 import React from 'react';
 
 import {
-  useQuery,
-  useMutation,
-  useQueryClient,
   QueryClient,
   QueryClientProvider,
 } from 'react-query'
 import { ReactQueryDevtools } from 'react-query/devtools'
 import { ErrorBoundary, FallbackProps } from 'react-error-boundary';
-import { useForm } from 'react-hook-form';
+
+import AppRouter from './views';
+import { theme } from "./theme";
+import { ThemeProvider } from '@mui/private-theming';
+import { CssBaseline } from '@mui/material';
+
 
 const queryClient = new QueryClient();
 
@@ -23,62 +25,26 @@ function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
   )
 }
 
-function Test() {
-  const { isLoading, error, data } = useQuery("repoData", () =>
-    fetch(
-      "https://api.github.com/repos/tannerlinsley/react-query"
-    ).then((res) => res.json())
-  );
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm();
-
-  if (isLoading) return (<span>Loading...</span>);
-  if (error) return (<span>An error has occurred: ${error}</span>);
-
-
-  const onSubmit = (data: any) => console.log(data);
-
-  return (
-    <div>
-      <h1>{data.name}</h1>
-      <p>{data.description}</p>
-      <strong>👀 {data.subscribers_count}</strong>{" "}
-      <strong>✨ {data.stargazers_count}</strong>{" "}
-      <strong>🍴 {data.forks_count}</strong>
-
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <input {...register('firstName')} /> {/* register an input */}
-        <input {...register('lastName', { required: true })} />
-        {errors.lastName && <p>Last name is required.</p>}
-        <input {...register('age', { pattern: /\d+/ })} />
-        {errors.age && <p>Please enter number for age.</p>}
-        <input type="submit" />
-      </form>
-    </div>
-  );
-}
-
 function App() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const ilogs = urlParams.get('ilogs');
+
   return (
-    <QueryClientProvider client={queryClient}>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <QueryClientProvider client={queryClient}>
+        <ErrorBoundary
+          FallbackComponent={ErrorFallback}
+          onReset={() => {
+            // reset the state of your app so the error doesn't happen again
+          }}
+        >
+          <AppRouter />
+        </ErrorBoundary>
 
-      <ErrorBoundary
-        FallbackComponent={ErrorFallback}
-        onReset={() => {
-          // reset the state of your app so the error doesn't happen again
-        }}
-      >
-        <div>
-          <Test />
-        </div>
-      </ErrorBoundary>
-
-      <ReactQueryDevtools />
-    </QueryClientProvider>
+        {ilogs != null ? (<ReactQueryDevtools />) : undefined}
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
 
